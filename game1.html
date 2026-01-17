@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Number Guessing Game</title>
+    <style>
+        body {
+            background-color: #eef2f3;
+            font-family: Arial;
+            text-align: center;
+        }
+
+        .game-box {
+            background: white;
+            width: 380px;
+            margin: 100px auto;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 0 12px gray;
+        }
+
+        input {
+            padding: 8px;
+            width: 100px;
+        }
+
+        button {
+            padding: 8px 14px;
+            margin: 6px;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+
+<body onload="startTimer()">
+
+<div class="game-box">
+    <h1>🎯 Number Guessing Game</h1>
+    <p>Guess a number between <b>1 and 100</b></p>
+
+    <input type="number" id="guess" />
+    <br><br>
+
+    <button onclick="checkGuess()">Check</button>
+    <button onclick="restartGame()">Restart</button>
+
+    <p id="result"></p>
+    <p id="attempts"></p>
+    <p id="timer"></p>
+    <p id="score"></p>
+</div>
+
+<!-- Sound Effects -->
+<audio id="correctSound" src="https://www.soundjay.com/buttons/sounds/button-4.mp3"></audio>
+<audio id="wrongSound" src="https://www.soundjay.com/buttons/sounds/button-10.mp3"></audio>
+
+<script>
+    let secretNumber = Math.floor(Math.random() * 100) + 1;
+    let tries = 0;
+    let time = 0;
+    let timerInterval;
+
+    function startTimer() {
+        timerInterval = setInterval(() => {
+            time++;
+            document.getElementById("timer").innerHTML =
+                "⏱ Time: " + time + " seconds";
+        }, 1000);
+    }
+
+    function checkGuess() {
+        let userGuess = parseInt(document.getElementById("guess").value);
+        tries++;
+
+        if (userGuess === secretNumber) {
+            document.getElementById("result").innerHTML =
+                "🎉 Correct! You won!";
+            document.getElementById("correctSound").play();
+            clearInterval(timerInterval);
+        } 
+        else if (userGuess > secretNumber) {
+            document.getElementById("result").innerHTML =
+                "📉 Too high!";
+            document.getElementById("wrongSound").play();
+        } 
+        else {
+            document.getElementById("result").innerHTML =
+                "📈 Too low!";
+            document.getElementById("wrongSound").play();
+        }
+
+        let score = Math.max(0, 100 - tries * 5);
+
+        document.getElementById("attempts").innerHTML =
+            "Attempts: " + tries;
+
+        document.getElementById("score").innerHTML =
+            "🏆 Score: " + score;
+    }
+
+    function restartGame() {
+        secretNumber = Math.floor(Math.random() * 100) + 1;
+        tries = 0;
+        time = 0;
+        clearInterval(timerInterval);
+        startTimer();
+
+        document.getElementById("result").innerHTML = "";
+        document.getElementById("attempts").innerHTML = "";
+        document.getElementById("score").innerHTML = "";
+        document.getElementById("guess").value = "";
+    }
+</script>
+
+</body>
+</html>
