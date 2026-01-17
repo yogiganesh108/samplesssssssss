@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dodge Game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial;
+            background: linear-gradient(to bottom, #1e3c72, #2a5298);
+            color: white;
+        }
+
+        #gameArea {
+            position: relative;
+            width: 500px;
+            height: 600px;
+            margin: 50px auto;
+            background: #222;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        #player {
+            position: absolute;
+            bottom: 10px;
+            left: 220px;
+            width: 60px;
+            height: 60px;
+            background: #00f;
+            border-radius: 10px;
+        }
+
+        .obstacle {
+            position: absolute;
+            top: 0;
+            width: 50px;
+            height: 50px;
+            background: red;
+            border-radius: 10px;
+        }
+
+        #scoreboard {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        #scoreboard h2 {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+
+<body>
+<div id="gameArea">
+    <div id="player"></div>
+</div>
+
+<div id="scoreboard">
+    <h2>Score: <span id="score">0</span></h2>
+    <h2>Level: <span id="level">1</span></h2>
+</div>
+
+<!-- Sounds -->
+<audio id="hitSound" src="https://www.soundjay.com/button/beep-10.mp3"></audio>
+<audio id="scoreSound" src="https://www.soundjay.com/button/beep-07.mp3"></audio>
+<audio id="levelUpSound" src="https://www.soundjay.com/button/button-4.mp3"></audio>
+
+<script>
+const gameArea = document.getElementById('gameArea');
+const player = document.getElementById('player');
+let score = 0;
+let level = 1;
+let obstacles = [];
+let speed = 2;
+let gameInterval;
+let keys = {};
+
+// ✅ Keyboard input fixed
+document.addEventListener('keydown', function(e) {
+    e.preventDefault(); // Prevent arrow keys from scrolling the page
+    keys[e.key] = true;
+});
+
+document.addEventListener('keyup', function(e) {
+    e.preventDefault();
+    keys[e.key] = false;
+});
+
+// Move player
+function movePlayer() {
+    let left = parseInt(player.style.left);
+    if(keys['ArrowLeft'] && left > 0) player.style.left = (left - 5) + 'px';
+    if(keys['ArrowRight'] && left < (gameArea.offsetWidth - player.offsetWidth)) player.style.left = (left + 5) + 'px';
+}
+
+// Create obstacle
+function createObstacle() {
+    const obs = document.createElement('div');
+    obs.classList.add('obstacle');
+    obs.style.left = Math.random() * (gameArea.offsetWidth - 50) + 'px';
+    obs.style.background = ['#f00','#ff0','#0f0','#0ff','#f0f','#fff'][Math.floor(Math.random()*6)];
+    gameArea.appendChild(obs);
+    obstacles.push(obs);
+}
+
+// Update game
+function updateGame() {
+    movePlayer();
+
+    for(let i = obstacles.length - 1; i >= 0; i--) {
+        let obs = obstacles[i];
+        let top = parseInt(obs.style.top) || 0;
+        top += speed;
+        obs.style.top = top + 'px';
+
+        // Collision detection
+        let playerRect = player.getBoundingClientRect();
+        let obsRect = obs.getBoundingClientRect();
+        if(!(playerRect.right < obsRect.left || 
+             playerRect.left > obsRect.right ||
+             playerRect.bottom < obsRect.top || 
+             playerRect.top > obsRect.bottom)) {
+                 document.getElementById('hitSound').play();
+                 alert("💥 Game Over! Your Score: " + score);
+                 location.reload();
+        }
+
+        // Passed obstacle
+        if(top > gameArea.offsetHeight) {
+            score += 10;
+            document.getElementById('scoreSound').play();
+            document.getElementById('score').textContent = score;
+            obs.remove();
+            obstacles.splice(i,1);
+
+            // Level up
+            if(score % 100 === 0) {
+                level++;
+                speed += 1;
+                document.getElementById('level').textContent = level;
+                document.getElementById('levelUpSound').play();
+            }
+        }
+    }
+}
+
+// Game loop
+function gameLoop() {
+    updateGame();
+}
+
+// Start game
+function startGame() {
+    gameInterval = setInterval(gameLoop, 20);
+    setInterval(createObstacle, 1500);
+}
+
+startGame();
+</script>
+</body>
+</html>

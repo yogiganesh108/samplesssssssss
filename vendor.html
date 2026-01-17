@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Nearby Vendors</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Nearby Street Vendors</h1>
+    <p>Search vendors by location and category</p>
+</header>
+
+<section class="filter">
+    <input type="text" id="searchLocation" placeholder="Search by location">
+    <input type="text" id="searchCategory" placeholder="Search by category">
+    <button onclick="filterVendors()" class="btn secondary">Search</button>
+</section>
+
+<section id="vendorList" class="vendor-list">
+    <!-- Vendor cards will appear here -->
+</section>
+
+<script src="script.js"></script>
+</body>
+</html>

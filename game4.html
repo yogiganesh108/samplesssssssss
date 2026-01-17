@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Click the Green Box</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: white;
+    text-align: center;
+}
+
+h1 { margin-top: 15px; }
+
+#hud {
+    font-size: 20px;
+    margin-top: 10px;
+}
+
+#gameArea {
+    width: 420px;
+    height: 420px;
+    margin: 20px auto;
+    background: #020617;
+    border-radius: 14px;
+    position: relative;
+    overflow: hidden;
+    display: none;
+}
+
+.box {
+    width: 60px;
+    height: 60px;
+    position: absolute;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+button {
+    padding: 12px 22px;
+    margin: 8px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+}
+
+.hidden { display: none; }
+
+.level-btn.locked {
+    background: #334155;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.level-btn {
+    background: #22c55e;
+    color: black;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🎯 Click the Green Box</h1>
+
+<div id="startScreen">
+    <button onclick="startGame()">START GAME 🔊</button>
+</div>
+
+<div id="levelScreen" class="hidden">
+    <h2>Select Level</h2>
+    <div id="levels"></div>
+</div>
+
+<div id="hud" class="hidden">
+    Level: <span id="level">1</span> |
+    Score: <span id="score">0</span> |
+    Lives: <span id="lives">3</span>
+</div>
+
+<div id="gameArea"></div>
+
+<div id="message" class="hidden"></div>
+
+<!-- Sounds -->
+<audio id="correct" src="https://www.soundjay.com/button/beep-07.mp3"></audio>
+<audio id="wrong" src="https://www.soundjay.com/button/beep-10.mp3"></audio>
+<audio id="miss" src="https://www.soundjay.com/button/beep-05.mp3"></audio>
+<audio id="levelup" src="https://www.soundjay.com/misc/small-bell-ring-01.mp3"></audio>
+<audio id="over" src="https://www.soundjay.com/button/button-16.mp3"></audio>
+
+<script>
+const levelData = [
+  { speed: 1200, target: 40, bg: "#0f172a" },
+  { speed: 1000, target: 60, bg: "#1e293b" },
+  { speed: 800,  target: 80, bg: "#312e81" },
+  { speed: 650,  target: 100, bg: "#4c1d95" },
+  { speed: 500,  target: 120, bg: "#7c2d12" }
+];
+
+let unlocked = 1;
+let currentLevel = 0;
+let score = 0;
+let lives = 3;
+let timer;
+let playing = false;
+
+const gameArea = document.getElementById("gameArea");
+const hud = document.getElementById("hud");
+const message = document.getElementById("message");
+
+function play(id) {
+    const s = document.getElementById(id);
+    s.currentTime = 0;
+    s.play();
+}
+
+function startGame() {
+    document.getElementById("startScreen").classList.add("hidden");
+    document.getElementById("levelScreen").classList.remove("hidden");
+    renderLevels();
+}
+
+function renderLevels() {
+    const container = document.getElementById("levels");
+    container.innerHTML = "";
+    for (let i = 0; i < levelData.length; i++) {
+        const btn = document.createElement("button");
+        btn.textContent = "Level " + (i + 1);
+        btn.className = "level-btn";
+        if (i + 1 > unlocked) {
+            btn.classList.add("locked");
+        } else {
+            btn.onclick = () => startLevel(i);
+        }
+        container.appendChild(btn);
+    }
+}
+
+function startLevel(lvl) {
+    document.getElementById("levelScreen").classList.add("hidden");
+    gameArea.style.display = "block";
+    hud.classList.remove("hidden");
+
+    currentLevel = lvl;
+    score = 0;
+    lives = 3;
+    playing = true;
+
+    document.body.style.background = levelData[lvl].bg;
+    updateHUD();
+
+    clearInterval(timer);
+    timer = setInterval(spawnBox, levelData[lvl].speed);
+}
+
+function spawnBox() {
+    if (!playing) return;
+
+    const box = document.createElement("div");
+    box.className = "box";
+    const colors = ["red","blue","yellow","purple","green"];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    box.style.background = color;
+    box.style.left = Math.random() * 360 + "px";
+    box.style.top = Math.random() * 360 + "px";
+
+    box.onclick = () => {
+        if (!playing) return;
+        if (color === "green") {
+            score += 10;
+            play("correct");
+        } else {
+            lives--;
+            play("wrong");
+        }
+        box.remove();
+        checkState();
+    };
+
+    gameArea.appendChild(box);
+
+    setTimeout(() => {
+        if (gameArea.contains(box)) {
+            if (color === "green") {
+                lives--;
+                play("miss");
+            }
+            box.remove();
+            checkState();
+        }
+    }, levelData[currentLevel].speed);
+}
+
+function checkState() {
+    updateHUD();
+
+    if (lives <= 0) {
+        endGame(false);
+        return;
+    }
+
+    if (score >= levelData[currentLevel].target) {
+        clearInterval(timer);
+        playing = false;
+        play("levelup");
+        unlocked = Math.max(unlocked, currentLevel + 2);
+        message.innerHTML = `
+          <h2>Level ${currentLevel + 1} Complete 🎉</h2>
+          <button onclick="goLevels()">Back to Levels</button>
+        `;
+        message.classList.remove("hidden");
+        gameArea.style.display = "none";
+        hud.classList.add("hidden");
+    }
+}
+
+function goLevels() {
+    message.classList.add("hidden");
+    document.getElementById("levelScreen").classList.remove("hidden");
+    renderLevels();
+}
+
+function endGame(win) {
+    clearInterval(timer);
+    play("over");
+    message.innerHTML = `
+      <h2>${win ? "You Win!" : "Game Over 💀"}</h2>
+      <button onclick="location.reload()">Restart</button>
+    `;
+    message.classList.remove("hidden");
+    gameArea.style.display = "none";
+    hud.classList.add("hidden");
+}
+
+function updateHUD() {
+    document.getElementById("level").textContent = currentLevel + 1;
+    document.getElementById("score").textContent = score;
+    document.getElementById("lives").textContent = lives;
+}
+</script>
+
+</body>
+</html>
